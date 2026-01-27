@@ -170,6 +170,25 @@ void printPuzzle(const vector<vector<int>>& userPuzzle){
 
 // User selects an algorithm to run on there chosen 8-puzzle.
 void selectSearchAlgorithm(vector<vector<int>> puzzle){
-    cout << "temp" << endl;
+    int selectAlg = 0;
+    cout << "Please select an algorithm for your puzzle. Enter:" << endl;
+    cout << "\"1\" for Uniform Cost Search" << endl;
+    cout << "\"2\" for the Misplaced Tile Heuristic" << endl;
+    cout << "\"3\" for the Manhattan Heuristic" << endl;
+    cin >> selectAlg;
+
+    if (selectAlg == 1){
+        uniformCostSearch(puzzle, 0);   // No heuristic, i.e. basically BFS
+    }else if (selectAlg == 2){
+        uniformCostSearch(puzzle, 1);   // Misplaced Tile heuristic
+    }else{
+        uniformCostSearch(puzzle, 2);   // Manhattan heuristic
+    }
+
     return;
 }
+
+void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
+    cout << "temp";
+    return;
+};
