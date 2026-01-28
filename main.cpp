@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <queue>
 
 using namespace std; // so i dont have to put std everywhere
 
@@ -188,7 +189,20 @@ void selectSearchAlgorithm(vector<vector<int>> puzzle){
     return;
 }
 
-void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
+queue<vector<vector<int>>> uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
     cout << "temp";
-    return;
+    vector<vector<int>> startState = puzzle;
+    queue<vector<vector<int>>> FIFO;            // Creates a First In First Out data structure for BFS
+    FIFO.push(puzzle);                          // Start the working queue with the initial puzzle
+    queue<vector<vector<int>>> visited;         // If I have visited all the children, I can pop off of FIFO and move it to visited to check for repeat states
+    int expandedNodes = 0;
+    int depth = 0;
+
+    while(FIFO.size() > 0){                  // If the working queue is empty, then I have checked the entire search space and found no answer (or the puzzle was invalid)
+        if (FIFO.back() == goalState){
+            return FIFO;                        // If goalState is found, return the BFS 
+        }
+        // Perform UCS
+    }
+    // return "failure";
 };
