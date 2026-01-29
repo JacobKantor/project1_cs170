@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <set>
 
 using namespace std; // so i dont have to put std everywhere
 
@@ -59,10 +60,22 @@ vector<vector<int>> goalState = {
     {7, 8, 0}
 };
 
+struct TreeNode{
+    vector<vector<int>> board;
+    TreeNode *parent;    // pointer to a parent of the matrices type
+    int depth;
+    int cost;
+
+    // constructor
+    TreeNode(const vector<vector<int>> node, TreeNode* parent, int depth, int cost)
+        :board(node), parent(parent), depth(depth), cost(cost){}
+};
+
 // Forward function declarations in order to read the code how it runs sequentially
 vector<vector<int>> selectPuzzle();
 void printPuzzle(const vector<vector<int>>& userPuzzle);
 void selectSearchAlgorithm(vector<vector<int>> puzzle);
+void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic);
 
 
 // Prompt user to select a puzzle (see helper selectPuzzle()) or create one
@@ -189,20 +202,90 @@ void selectSearchAlgorithm(vector<vector<int>> puzzle){
     return;
 }
 
-queue<vector<vector<int>>> uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
-    cout << "temp";
-    vector<vector<int>> startState = puzzle;
-    queue<vector<vector<int>>> FIFO;            // Creates a First In First Out data structure for BFS
-    FIFO.push(puzzle);                          // Start the working queue with the initial puzzle
-    queue<vector<vector<int>>> visited;         // If I have visited all the children, I can pop off of FIFO and move it to visited to check for repeat states
-    int expandedNodes = 0;
-    int depth = 0;
+void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
+    TreeNode* startState = new TreeNode(puzzle, nullptr, 0, 0);    
+    queue<TreeNode*> FIFO;                          // Creates a First In First Out data structure for BFS
+    FIFO.push(startState);                          // Start the working queue with the initial puzzle
+    set<vector<vector<int>>> visited;               // Keeps track of children to prevent repeat visits to the identical states
+    int currQueueSize = 1;                          // 1 so far since the root startState
+    int maxQueueSize = 1;                           
+    int maxNodesExpanded = 0;
 
-    while(FIFO.size() > 0){                  // If the working queue is empty, then I have checked the entire search space and found no answer (or the puzzle was invalid)
-        if (FIFO.back() == goalState){
-            return FIFO;                        // If goalState is found, return the BFS 
+    while(!FIFO.empty()){                           // If the working queue is empty, then I have checked the entire search space and found no answer (or the puzzle was invalid)
+        TreeNode* currNode = FIFO.front();          // Store temporarily to perform operations then move to visited, also used to store parent for children
+        FIFO.pop();                                 // Remove the current node from FIFO
+        maxQueueSize--;
+
+        if (currNode->board == goalState){           // If goalState is found, return the BFS 
+            cout << "Puzzle Solved!" << endl;
+            printPuzzle(currNode->board);            // change to show path later?
+            cout << "Depth: " << currNode->depth << endl;
+            cout << "Max Queue Size: " << maxQueueSize << endl;
+            cout << "Max Nodes Expanded: " << maxNodesExpanded << endl;
+            // Print path?
+            return;                                  // end search now that the goal state is reached
         }
-        // Perform UCS
+
+
+        // PERFORM UCS -------------------
+        // Locate the empty tile position 0 by traversing the array
+        int zeroI = -1, zeroJ = -1;          
+        for (int i = 0; i < 3 && zeroI == -1; i++){         // && zeroI = -1 Since I dont need to search the rest of the matrix for 0 if I already found it
+            for (int j = 0; j < 3; j++){
+                if (currNode->board[i][j] == 0){
+                    zeroI = i;
+                    zeroJ = j;
+                }
+            }
+        }
+
+        // Check for valid swaps by using a 3x3 bound for the matrices
+        // Check up swap
+        // ADD FUNCTION FOR HEURISTICS TO COST
+        if (zeroI - 1 >= 0){    // if this condition is valid, then I need to make a new child with a board and link to parent
+            vector<vector<int>> childBoard = currNode->board;
+            swap(childBoard[zeroI][zeroJ], childBoard[zeroI - 1][zeroJ]);
+            if (visited.find(childBoard) == visited.end()){                   // the new childBoard hasn't been visted before (prevents moving back and forth between the same swaps)
+                FIFO.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));  // put the new child on the working queue
+                visited.insert(childBoard);
+                currQueueSize++;    // keep track of pushes to the queue
+            }
+        }
+        // Check down swap
+        if (zeroI + 1 <= 2){ 
+            vector<vector<int>> childBoard = currNode->board;
+            swap(childBoard[zeroI][zeroJ], childBoard[zeroI + 1][zeroJ]);
+            if (visited.find(childBoard) == visited.end()){
+                FIFO.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));
+                visited.insert(childBoard);
+                currQueueSize++;
+            }
+        }
+        // Check left swap
+        if (zeroJ - 1 >= 0){
+            vector<vector<int>> childBoard = currNode->board;
+            swap(childBoard[zeroI][zeroJ], childBoard[zeroI][zeroJ - 1]);
+            if (visited.find(childBoard) == visited.end()){
+                FIFO.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));
+                visited.insert(childBoard);
+                currQueueSize++;
+            }
+        }
+        // Check right swap
+        if (zeroJ + 1 <= 2){
+            vector<vector<int>> childBoard = currNode->board;
+            swap(childBoard[zeroI][zeroJ], childBoard[zeroI][zeroJ + 1]);
+            if (visited.find(childBoard) == visited.end()){
+                FIFO.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));
+                visited.insert(childBoard);
+                currQueueSize++;
+            }
+        }
+        
+        maxQueueSize = max(maxQueueSize, currQueueSize);    // update max queue size after checking all 4 possible children
+        maxNodesExpanded++;                                 // the current board has visited all its possible children
     }
-    // return "failure";
+    
+    // return "failure" (no solution)
+    cout << "failure, there is no solution in the search space, or the 8-puzzle is invalid" << endl;
 };
