@@ -2,8 +2,11 @@
 #include <vector>
 #include <queue>
 #include <set>
+#include <chrono>
 
-using namespace std; // so i dont have to put std everywhere
+// so i dont have to put std everywhere
+using namespace std;
+using namespace std::chrono;
 
 // Hard coded preloaded puzzles the user can select to compute
 vector<vector<int>> trivial1 = {
@@ -208,22 +211,30 @@ void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
     FIFO.push(startState);                          // Start the working queue with the initial puzzle
     set<vector<vector<int>>> visited;               // Keeps track of children to prevent repeat visits to the identical states
     int currQueueSize = 1;                          // 1 so far since the root startState
-    int maxQueueSize = 1;                           
-    int maxNodesExpanded = 0;
+    int maxQueueSize = 1;                           // compare with current for updating
+    int maxNodesExpanded = 0;                       // updates each time all 4 possible children are checked for the current board
+    
+    // declare clock start and stop variables
+    steady_clock::time_point start;
+    steady_clock::time_point stop;
 
+    start = steady_clock::now();                    // starts the timer
     while(!FIFO.empty()){                           // If the working queue is empty, then I have checked the entire search space and found no answer (or the puzzle was invalid)
         TreeNode* currNode = FIFO.front();          // Store temporarily to perform operations then move to visited, also used to store parent for children
         FIFO.pop();                                 // Remove the current node from FIFO
         maxQueueSize--;
 
-        if (currNode->board == goalState){           // If goalState is found, return the BFS 
+        if (currNode->board == goalState){          // If goalState is found, return the BFS 
+            stop = steady_clock::now();             // ends timer
+            duration<double, milli> duration = stop - start;    // converts the difference of time to double milliseconds type
             cout << "Puzzle Solved!" << endl;
-            printPuzzle(currNode->board);            // change to show path later?
+            printPuzzle(currNode->board);           // change to show path later?
             cout << "Depth: " << currNode->depth << endl;
             cout << "Max Queue Size: " << maxQueueSize << endl;
             cout << "Max Nodes Expanded: " << maxNodesExpanded << endl;
+            cout << "Completion Time: " << duration.count() << " milliseconds" << endl;
             // Print path?
-            return;                                  // end search now that the goal state is reached
+            return;                                 // end search now that the goal state is reached
         }
 
 
