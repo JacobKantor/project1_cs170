@@ -70,7 +70,7 @@ struct TreeNode{
     int cost;
 
     // constructor
-    TreeNode(const vector<vector<int>> node, TreeNode* parent, int depth, int cost)
+    TreeNode(const vector<vector<int>>& node, TreeNode* parent, int depth, int cost)
         :board(node), parent(parent), depth(depth), cost(cost){}
 };
 
@@ -84,10 +84,10 @@ struct Compare{
 // Forward function declarations in order to read the code how it runs sequentially
 vector<vector<int>> selectPuzzle();
 void printPuzzle(const vector<vector<int>>& userPuzzle);
-void selectSearchAlgorithm(vector<vector<int>> puzzle);
-void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic);
-int misplacedTile(vector<vector<int>> childBoard);
-int manhattan(vector<vector<int>> childBoard);
+void selectSearchAlgorithm(const vector<vector<int>>& puzzle);
+void uniformCostSearch(const vector<vector<int>>& puzzle, int heuristic);
+int misplacedTile(const vector<vector<int>>& childBoard);
+int manhattan(const vector<vector<int>>& childBoard);
 
 
 // Prompt user to select a puzzle (see helper selectPuzzle()) or create one
@@ -195,7 +195,7 @@ void printPuzzle(const vector<vector<int>>& userPuzzle){
 }
 
 // User selects an algorithm to run on there chosen 8-puzzle.
-void selectSearchAlgorithm(vector<vector<int>> puzzle){
+void selectSearchAlgorithm(const vector<vector<int>>& puzzle){
     int selectAlg = 0;
     cout << "Please select an algorithm for your puzzle. Enter:" << endl;
     cout << "\"1\" for Uniform Cost Search" << endl;
@@ -214,7 +214,7 @@ void selectSearchAlgorithm(vector<vector<int>> puzzle){
     return;
 }
 
-void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
+void uniformCostSearch(const vector<vector<int>>& puzzle, int heuristic){
     TreeNode* startState = new TreeNode(puzzle, nullptr, 0, 0);    
     priority_queue<TreeNode*, vector<TreeNode*>, Compare> priorityQueue;                          // Creates a First In First Out data structure for BFS
     priorityQueue.push(startState);                          // Start the working queue with the initial puzzle
@@ -334,10 +334,40 @@ void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
     cout << "failure, there is no solution in the search space, or the 8-puzzle is invalid" << endl;
 };
 
-int misplacedTile(vector<vector<int>> childBoard){
-    return 1;
+int misplacedTile(const vector<vector<int>>& childBoard){
+    int misplaced = 0;
+    for (int i = 0; i < 3; i++){                            // traverse each position of a board
+        for (int j = 0; j < 3; j++){
+            if (childBoard[i][j] != goalState[i][j]){       // compare the current board to the goal board at the specified psoition
+                misplaced+=1;                               // if the tile is not in the goal position, increases the cost by 1     
+            }
+        }
+    }
+    
+    return misplaced;
 }
 
-int manhattan(vector<vector<int>> childBoard){
-    return 1;
+int manhattan(const vector<vector<int>>& childBoard){
+    int distance = 0;               // cost is the difference in distance from the goal position
+    int goalNum = 0;                // stores the value at the indices for the board goalState
+    int currNum = 0;                // stores the value at the indices for the board childBoard
+
+    // traverse the goalState board
+    for (int i = 0; i < 3; i++){
+        for (int j = 0; j < 3; j++){
+            goalNum = goalState[i][j];                          // store the current position value at goalState
+
+            // traverse the childBoard, comparing each position to each position on the goalState board
+            for (int x = 0; x < 3; x++){
+                for (int y = 0; y < 3; y++){
+                    currNum = childBoard[x][y];                 // store the current position value at childBoard
+                    if (currNum == goalNum && currNum!= 0){     // compare if the values are the same
+                        distance+= abs(x-i) + abs(y-j);         // calculate the difference in distance between the goalState position and childBoard position
+                    }
+                }
+            }
+        }
+    }
+
+    return distance;
 }
