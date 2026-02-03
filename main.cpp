@@ -74,11 +74,20 @@ struct TreeNode{
         :board(node), parent(parent), depth(depth), cost(cost){}
 };
 
+// Comparisons for priority queue min heap
+struct Compare{
+    bool operator()(const TreeNode* a, const TreeNode* b) const{
+        return a->cost > b->cost;
+    }
+};
+
 // Forward function declarations in order to read the code how it runs sequentially
 vector<vector<int>> selectPuzzle();
 void printPuzzle(const vector<vector<int>>& userPuzzle);
 void selectSearchAlgorithm(vector<vector<int>> puzzle);
 void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic);
+int misplacedTile(vector<vector<int>> childBoard);
+int manhattan(vector<vector<int>> childBoard);
 
 
 // Prompt user to select a puzzle (see helper selectPuzzle()) or create one
@@ -207,8 +216,8 @@ void selectSearchAlgorithm(vector<vector<int>> puzzle){
 
 void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
     TreeNode* startState = new TreeNode(puzzle, nullptr, 0, 0);    
-    queue<TreeNode*> FIFO;                          // Creates a First In First Out data structure for BFS
-    FIFO.push(startState);                          // Start the working queue with the initial puzzle
+    priority_queue<TreeNode*, vector<TreeNode*>, Compare> priorityQueue;                          // Creates a First In First Out data structure for BFS
+    priorityQueue.push(startState);                          // Start the working queue with the initial puzzle
     set<vector<vector<int>>> visited;               // Keeps track of children to prevent repeat visits to the identical states
     int currQueueSize = 1;                          // 1 so far since the root startState
     int maxQueueSize = 1;                           // compare with current for updating
@@ -219,9 +228,9 @@ void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
     steady_clock::time_point stop;
 
     start = steady_clock::now();                    // starts the timer
-    while(!FIFO.empty()){                           // If the working queue is empty, then I have checked the entire search space and found no answer (or the puzzle was invalid)
-        TreeNode* currNode = FIFO.front();          // Store temporarily to perform operations then move to visited, also used to store parent for children
-        FIFO.pop();                                 // Remove the current node from FIFO
+    while(!priorityQueue.empty()){                           // If the working queue is empty, then I have checked the entire search space and found no answer (or the puzzle was invalid)
+        TreeNode* currNode = priorityQueue.top();          // Store temporarily to perform operations then move to visited, also used to store parent for children
+        priorityQueue.pop();                                 // Remove the current node from priorityQueue
         maxQueueSize--;
 
         if (currNode->board == goalState){          // If goalState is found, return the BFS 
@@ -257,7 +266,13 @@ void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
             vector<vector<int>> childBoard = currNode->board;
             swap(childBoard[zeroI][zeroJ], childBoard[zeroI - 1][zeroJ]);
             if (visited.find(childBoard) == visited.end()){                   // the new childBoard hasn't been visted before (prevents moving back and forth between the same swaps)
-                FIFO.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));  // put the new child on the working queue
+                if (heuristic == 0){                                          // put the new child on the working queue, updating cost according to the heuristic selected
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));  
+                }else if (heuristic == 1){
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + misplacedTile(childBoard)));  
+                }else if (heuristic == 2){
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + manhattan(childBoard)));  
+                }
                 visited.insert(childBoard);
                 currQueueSize++;    // keep track of pushes to the queue
             }
@@ -267,7 +282,13 @@ void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
             vector<vector<int>> childBoard = currNode->board;
             swap(childBoard[zeroI][zeroJ], childBoard[zeroI + 1][zeroJ]);
             if (visited.find(childBoard) == visited.end()){
-                FIFO.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));
+                if (heuristic == 0){                                          // put the new child on the working queue, updating cost according to the heuristic selected
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));  
+                }else if (heuristic == 1){
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + misplacedTile(childBoard)));  
+                }else if (heuristic == 2){
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + manhattan(childBoard)));  
+                }
                 visited.insert(childBoard);
                 currQueueSize++;
             }
@@ -277,7 +298,13 @@ void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
             vector<vector<int>> childBoard = currNode->board;
             swap(childBoard[zeroI][zeroJ], childBoard[zeroI][zeroJ - 1]);
             if (visited.find(childBoard) == visited.end()){
-                FIFO.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));
+                if (heuristic == 0){                                          // put the new child on the working queue, updating cost according to the heuristic selected
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));  
+                }else if (heuristic == 1){
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + misplacedTile(childBoard)));  
+                }else if (heuristic == 2){
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + manhattan(childBoard)));  
+                }
                 visited.insert(childBoard);
                 currQueueSize++;
             }
@@ -287,7 +314,13 @@ void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
             vector<vector<int>> childBoard = currNode->board;
             swap(childBoard[zeroI][zeroJ], childBoard[zeroI][zeroJ + 1]);
             if (visited.find(childBoard) == visited.end()){
-                FIFO.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));
+                if (heuristic == 0){                                          // put the new child on the working queue, updating cost according to the heuristic selected
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));  
+                }else if (heuristic == 1){
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + misplacedTile(childBoard)));  
+                }else if (heuristic == 2){
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + manhattan(childBoard)));  
+                }
                 visited.insert(childBoard);
                 currQueueSize++;
             }
@@ -300,3 +333,11 @@ void uniformCostSearch(vector<vector<int>>& puzzle, int heuristic){
     // return "failure" (no solution)
     cout << "failure, there is no solution in the search space, or the 8-puzzle is invalid" << endl;
 };
+
+int misplacedTile(vector<vector<int>> childBoard){
+    return 1;
+}
+
+int manhattan(vector<vector<int>> childBoard){
+    return 1;
+}
