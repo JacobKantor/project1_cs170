@@ -74,7 +74,7 @@ struct TreeNode{
         :board(node), parent(parent), depth(depth), cost(cost){}
 };
 
-// Comparisons for priority queue min heap
+// Comparisons for priority queue min heap to know the next best node
 struct Compare{
     bool operator()(const TreeNode* a, const TreeNode* b) const{
         return a->cost > b->cost;
@@ -187,10 +187,14 @@ vector<vector<int>> selectPuzzle(){
 void printPuzzle(const vector<vector<int>>& userPuzzle){
     // nested for loop for 2D [i,j] indexed vector
     for (int i = 0; i < userPuzzle.size(); i++){
+        cout << "[ ";
         for (int j = 0; j < userPuzzle[i].size(); j++){
-            cout << userPuzzle[i][j] << " ";
+            cout << userPuzzle[i][j];
+            if (j != userPuzzle[i].size() - 1){
+                cout << ", ";
+            }
         }
-        cout << endl;
+        cout << " ]" << endl;
     }
 }
 
@@ -218,118 +222,117 @@ void uniformCostSearch(const vector<vector<int>>& puzzle, int heuristic){
     TreeNode* startState = new TreeNode(puzzle, nullptr, 0, 0);    
     priority_queue<TreeNode*, vector<TreeNode*>, Compare> priorityQueue;                          // Creates a First In First Out data structure for BFS
     priorityQueue.push(startState);                          // Start the working queue with the initial puzzle
+    
     set<vector<vector<int>>> visited;               // Keeps track of children to prevent repeat visits to the identical states
     int currQueueSize = 1;                          // 1 so far since the root startState
     int maxQueueSize = 1;                           // compare with current for updating
     int maxNodesExpanded = 0;                       // updates each time all 4 possible children are checked for the current board
     
     // declare clock start and stop variables
-    steady_clock::time_point start;
-    steady_clock::time_point stop;
+    high_resolution_clock::time_point start;
+    high_resolution_clock::time_point stop;
+    start = high_resolution_clock::now();                    // starts the timer
 
-    start = steady_clock::now();                    // starts the timer
     while(!priorityQueue.empty()){                           // If the working queue is empty, then I have checked the entire search space and found no answer (or the puzzle was invalid)
         TreeNode* currNode = priorityQueue.top();          // Store temporarily to perform operations then move to visited, also used to store parent for children
         priorityQueue.pop();                                 // Remove the current node from priorityQueue
         maxQueueSize--;
 
-        if (currNode->board == goalState){          // If goalState is found, return the BFS 
-            stop = steady_clock::now();             // ends timer
-            duration<double, milli> duration = stop - start;    // converts the difference of time to double milliseconds type
-            cout << "Puzzle Solved!" << endl;
-            printPuzzle(currNode->board);           // change to show path later?
-            cout << "Depth: " << currNode->depth << endl;
-            cout << "Max Queue Size: " << maxQueueSize << endl;
-            cout << "Max Nodes Expanded: " << maxNodesExpanded << endl;
-            cout << "Completion Time: " << duration.count() << " milliseconds" << endl;
-            // Print path?
-            return;                                 // end search now that the goal state is reached
-        }
+        if (!visited.count(currNode->board)){           // if this is a new board, expand, otherwise skip to next board state iteration
+            visited.insert(currNode->board);            // Now that the currBoard has been popped and is being expanded, add it to visited
+            int hOfN = 0;
+            if (heuristic == 1){
+                hOfN = misplacedTile(currNode->board);
+            }else if (heuristic == 2){
+                hOfN = manhattan(currNode->board);
+            }
+            cout << "The best state to expand with a g(n) = " << currNode->depth << " and h(n) = " << hOfN << " is:" << endl;
+            printPuzzle(currNode->board);
+
+            if (currNode->board == goalState){          // If goalState is found, return the BFS 
+                stop = high_resolution_clock::now();             // ends timer
+                duration<double, milli> duration = stop - start;    // converts the difference of time to double milliseconds type
+                cout << "Puzzle Solved!" << endl;
+                printPuzzle(currNode->board);           // change to show path later?
+                cout << "Depth: " << currNode->depth << endl;
+                cout << "Max Nodes Expanded: " << maxNodesExpanded << endl;
+                cout << "Max Queue Size: " << maxQueueSize << endl;
+                cout << "Completion Time: " << duration.count() << " milliseconds" << endl;
+                return;                                 // end search now that the goal state is reached
+            }
 
 
-        // PERFORM UCS -------------------
-        // Locate the empty tile position 0 by traversing the array
-        int zeroI = -1, zeroJ = -1;          
-        for (int i = 0; i < 3 && zeroI == -1; i++){         // && zeroI = -1 Since I dont need to search the rest of the matrix for 0 if I already found it
-            for (int j = 0; j < 3; j++){
-                if (currNode->board[i][j] == 0){
-                    zeroI = i;
-                    zeroJ = j;
+            // PERFORM UCS -------------------
+            // Locate the empty tile position 0 by traversing the array
+            int zeroI = -1, zeroJ = -1;          
+            for (int i = 0; i < 3 && zeroI == -1; i++){         // && zeroI = -1 Since I dont need to search the rest of the matrix for 0 if I already found it
+                for (int j = 0; j < 3; j++){
+                    if (currNode->board[i][j] == 0){
+                        zeroI = i;
+                        zeroJ = j;
+                    }
                 }
             }
-        }
 
-        // Check for valid swaps by using a 3x3 bound for the matrices
-        // Check up swap
-        // ADD FUNCTION FOR HEURISTICS TO COST
-        if (zeroI - 1 >= 0){    // if this condition is valid, then I need to make a new child with a board and link to parent
-            vector<vector<int>> childBoard = currNode->board;
-            swap(childBoard[zeroI][zeroJ], childBoard[zeroI - 1][zeroJ]);
-            if (visited.find(childBoard) == visited.end()){                   // the new childBoard hasn't been visted before (prevents moving back and forth between the same swaps)
+            // Check for valid swaps by using a 3x3 bound for the matrices
+            // Check up swap
+            // ADD FUNCTION FOR HEURISTICS TO COSTs
+            if (zeroI - 1 >= 0){    // if this condition is valid, then I need to make a new child with a board and link to parent
+                vector<vector<int>> childBoard = currNode->board;
+                swap(childBoard[zeroI][zeroJ], childBoard[zeroI - 1][zeroJ]);
                 if (heuristic == 0){                                          // put the new child on the working queue, updating cost according to the heuristic selected
                     priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));  
                 }else if (heuristic == 1){
-                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + misplacedTile(childBoard)));  
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->depth + 1 + misplacedTile(childBoard)));  // switch cost to f(n) = g(n) + h(n) for A* heuristics
                 }else if (heuristic == 2){
-                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + manhattan(childBoard)));  
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->depth + 1 + manhattan(childBoard)));
                 }
-                visited.insert(childBoard);
                 currQueueSize++;    // keep track of pushes to the queue
             }
-        }
-        // Check down swap
-        if (zeroI + 1 <= 2){ 
-            vector<vector<int>> childBoard = currNode->board;
-            swap(childBoard[zeroI][zeroJ], childBoard[zeroI + 1][zeroJ]);
-            if (visited.find(childBoard) == visited.end()){
+            // Check down swap
+            if (zeroI + 1 <= 2){ 
+                vector<vector<int>> childBoard = currNode->board;
+                swap(childBoard[zeroI][zeroJ], childBoard[zeroI + 1][zeroJ]);
                 if (heuristic == 0){                                          // put the new child on the working queue, updating cost according to the heuristic selected
                     priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));  
                 }else if (heuristic == 1){
-                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + misplacedTile(childBoard)));  
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->depth + 1 + misplacedTile(childBoard)));  
                 }else if (heuristic == 2){
-                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + manhattan(childBoard)));  
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->depth + 1 + manhattan(childBoard)));  
                 }
-                visited.insert(childBoard);
                 currQueueSize++;
             }
-        }
-        // Check left swap
-        if (zeroJ - 1 >= 0){
-            vector<vector<int>> childBoard = currNode->board;
-            swap(childBoard[zeroI][zeroJ], childBoard[zeroI][zeroJ - 1]);
-            if (visited.find(childBoard) == visited.end()){
+            // Check left swap
+            if (zeroJ - 1 >= 0){
+                vector<vector<int>> childBoard = currNode->board;
+                swap(childBoard[zeroI][zeroJ], childBoard[zeroI][zeroJ - 1]);
                 if (heuristic == 0){                                          // put the new child on the working queue, updating cost according to the heuristic selected
                     priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));  
                 }else if (heuristic == 1){
-                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + misplacedTile(childBoard)));  
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->depth + 1 + misplacedTile(childBoard)));  
                 }else if (heuristic == 2){
-                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + manhattan(childBoard)));  
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->depth + 1 + manhattan(childBoard)));  
                 }
-                visited.insert(childBoard);
                 currQueueSize++;
             }
-        }
-        // Check right swap
-        if (zeroJ + 1 <= 2){
-            vector<vector<int>> childBoard = currNode->board;
-            swap(childBoard[zeroI][zeroJ], childBoard[zeroI][zeroJ + 1]);
-            if (visited.find(childBoard) == visited.end()){
+            // Check right swap
+            if (zeroJ + 1 <= 2){
+                vector<vector<int>> childBoard = currNode->board;
+                swap(childBoard[zeroI][zeroJ], childBoard[zeroI][zeroJ + 1]);
                 if (heuristic == 0){                                          // put the new child on the working queue, updating cost according to the heuristic selected
                     priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + 1));  
                 }else if (heuristic == 1){
-                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + misplacedTile(childBoard)));  
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->depth + 1 + misplacedTile(childBoard)));  
                 }else if (heuristic == 2){
-                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->cost + manhattan(childBoard)));  
+                    priorityQueue.push(new TreeNode(childBoard, currNode, currNode->depth + 1, currNode->depth + 1 + manhattan(childBoard)));  
                 }
-                visited.insert(childBoard);
                 currQueueSize++;
             }
+            
+            maxQueueSize = max(maxQueueSize, currQueueSize);    // update max queue size after checking all 4 possible children
+            maxNodesExpanded++;                                 // the current board has visited all its possible children
         }
-        
-        maxQueueSize = max(maxQueueSize, currQueueSize);    // update max queue size after checking all 4 possible children
-        maxNodesExpanded++;                                 // the current board has visited all its possible children
     }
-    
     // return "failure" (no solution)
     cout << "failure, there is no solution in the search space, or the 8-puzzle is invalid" << endl;
 };
@@ -338,7 +341,7 @@ int misplacedTile(const vector<vector<int>>& childBoard){
     int misplaced = 0;
     for (int i = 0; i < 3; i++){                            // traverse each position of a board
         for (int j = 0; j < 3; j++){
-            if (childBoard[i][j] != goalState[i][j]){       // compare the current board to the goal board at the specified psoition
+            if (childBoard[i][j] != goalState[i][j] && childBoard[i][j] != 0){       // compare the current board to the goal board at the specified psoition
                 misplaced+=1;                               // if the tile is not in the goal position, increases the cost by 1     
             }
         }
@@ -357,12 +360,14 @@ int manhattan(const vector<vector<int>>& childBoard){
         for (int j = 0; j < 3; j++){
             goalNum = goalState[i][j];                          // store the current position value at goalState
 
-            // traverse the childBoard, comparing each position to each position on the goalState board
-            for (int x = 0; x < 3; x++){
-                for (int y = 0; y < 3; y++){
-                    currNum = childBoard[x][y];                 // store the current position value at childBoard
-                    if (currNum == goalNum && currNum!= 0){     // compare if the values are the same
-                        distance+= abs(x-i) + abs(y-j);         // calculate the difference in distance between the goalState position and childBoard position
+            if (goalNum != 0){                                      // exclude 0
+                // traverse the childBoard, comparing each position to each position on the goalState board
+                for (int x = 0; x < 3; x++){
+                    for (int y = 0; y < 3; y++){
+                        currNum = childBoard[x][y];                 // store the current position value at childBoard
+                        if (currNum == goalNum && currNum!= 0){     // compare if the values are the same
+                            distance+= abs(x-i) + abs(y-j);         // calculate the difference in distance between the goalState position and childBoard position
+                        }
                     }
                 }
             }
