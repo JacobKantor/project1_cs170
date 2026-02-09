@@ -95,7 +95,7 @@ int manhattan(const vector<vector<int>>& childBoard);
 int main() {
     int puzzleType = 0;
 
-    cout << "Hello World! I am THE 8-puzzle Calculator. Enter \"1\" to choose from a seclection of premade puzzles, or enter \"2\" to create your own 8-puzzle!" << endl;
+    cout << "Hello World! I am THE 8-puzzle Calculator. Enter \"1\" to choose from a selection of premade puzzles, or enter \"2\" to create your own 8-puzzle!" << endl;
     cin >> puzzleType;
     
     if (puzzleType == 1){
@@ -254,9 +254,9 @@ void uniformCostSearch(const vector<vector<int>>& puzzle, int heuristic){
                 duration<double, milli> duration = stop - start;    // converts the difference of time to double milliseconds type
                 cout << "Puzzle Solved!" << endl;
                 printPuzzle(currNode->board);           // change to show path later?
-                cout << "Depth: " << currNode->depth << endl;
-                cout << "Max Nodes Expanded: " << maxNodesExpanded << endl;
-                cout << "Max Queue Size: " << maxQueueSize << endl;
+                cout << "Solution depth was : " << currNode->depth << endl;
+                cout << "Number of nodes expanded: " << maxNodesExpanded << endl;
+                cout << "Max queue size: " << maxQueueSize << endl;
                 cout << "Completion Time: " << duration.count() << " milliseconds" << endl;
                 return;                                 // end search now that the goal state is reached
             }
