@@ -14,58 +14,23 @@ Inputting 2 when initially prompted to select a puzzle will begin input for a cu
 
 Inputting a custom nPuzzle will look like this in the terminal:
 
-
+```
 Hello World! I am THE 8-puzzle Calculator. Enter "1" to choose from a selection of premade puzzles, or enter "2" to create your own 8-puzzle!
-
-
 2
-
-
 Please enter your custom 8-puzzle over valid digits 0-8, where 0 indicates the blank tile.
-
-
 Enter the three digits for row 1 (enter after each digit)
-
-
 1
-
-
 2
-
-
 3
-
-
 Enter the three digits for row 2 (press enter after each digit)
-
-
 4
-
-
 5
-
-
 6
-
-
 Enter the three digits for row 3 (press enter after each digit)
-
-
 7
-
-
 8
-
-
 0
-
-
 [ 1, 2, 3 ]
-
-
 [ 4, 5, 6 ]
-
-
 [ 7, 8, 0 ]
-
-
+```
