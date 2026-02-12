@@ -252,8 +252,8 @@ void uniformCostSearch(const vector<vector<int>>& puzzle, int heuristic){
             if (currNode->board == goalState){          // If goalState is found, return the BFS 
                 stop = high_resolution_clock::now();             // ends timer
                 duration<double, milli> duration = stop - start;    // converts the difference of time to double milliseconds type
-                cout << "Puzzle Solved!" << endl;
-                printPuzzle(currNode->board);           // change to show path later?
+                cout << "Puzzle Solved!" << endl << endl;
+                // printPuzzle(currNode->board);           // change to show path later?
                 cout << "Solution depth was : " << currNode->depth << endl;
                 cout << "Number of nodes expanded: " << maxNodesExpanded << endl;
                 cout << "Max queue size: " << maxQueueSize << endl;
